@@ -6,51 +6,184 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>סקר קצר</title>
+<title>הימור לתופס</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 <style>
 
+:root{
+--bg:#0b1120;
+--card:#111827;
+--card-2:#0f172a;
+--text:#e5e7eb;
+--muted:#94a3b8;
+--accent:#22c55e;
+--accent-2:#3b82f6;
+--danger:#ef4444;
+}
+
+*{
+box-sizing:border-box;
+}
+
 body{
-font-family:Arial;
-background:#111827;
-color:white;
+font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+background:radial-gradient(1200px 600px at 20% -10%, #1e293b 0%, rgba(14,20,35,0) 60%), var(--bg);
+color:var(--text);
+margin:0;
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
-margin:0;
+padding:24px;
+}
+
+.container{
+width:min(1100px, 100%);
+display:flex;
+flex-direction:column;
+gap:18px;
 }
 
 .card{
-background:#1f2937;
-padding:30px;
-border-radius:20px;
-width:320px;
-text-align:center;
+background:linear-gradient(180deg, rgba(17,24,39,0.98), rgba(15,23,42,0.98));
+border:1px solid rgba(148,163,184,0.15);
+border-radius:16px;
+padding:18px;
+box-shadow:0 20px 50px rgba(15,23,42,0.35);
 }
 
-input{
-width:100%;
-padding:10px;
-border-radius:10px;
-border:none;
-margin-top:10px;
-margin-bottom:15px;
+.title{
+font-size:28px;
+font-weight:700;
+margin:0 0 8px 0;
 }
 
-button{
+.sub{
+color:var(--muted);
+margin:0 0 18px 0;
+}
+
+.row{
+display:grid;
+grid-template-columns:repeat(2, minmax(0,1fr));
+gap:16px;
+}
+
+.row-3{
+display:grid;
+grid-template-columns:repeat(3, minmax(0,1fr));
+gap:16px;
+}
+
+.stack{
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+.input{
 width:100%;
-padding:12px;
+padding:12px 14px;
+border-radius:12px;
+border:1px solid rgba(148,163,184,0.2);
+background:#0b1220;
+color:var(--text);
+font-size:15px;
+}
+
+.button{
+width:100%;
+padding:12px 16px;
 border:none;
-border-radius:10px;
-background:#2563eb;
+border-radius:12px;
+background:var(--accent-2);
 color:white;
-font-weight:bold;
+font-weight:700;
 cursor:pointer;
+transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button:hover{
+transform:translateY(-1px);
+box-shadow:0 10px 20px rgba(59,130,246,0.25);
 }
 
 .hidden{
 display:none;
+}
+
+.bet-item{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px;
+border-radius:12px;
+background:rgba(15,23,42,0.7);
+border:1px solid rgba(148,163,184,0.15);
+}
+
+.bet-item.leader{
+border-color:rgba(34,197,94,0.6);
+box-shadow:0 0 0 1px rgba(34,197,94,0.3);
+}
+
+.badge{
+font-size:12px;
+padding:4px 8px;
+border-radius:999px;
+background:rgba(34,197,94,0.2);
+color:var(--accent);
+}
+
+.stats{
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+.muted{
+color:var(--muted);
+}
+
+.highlight{
+color:var(--accent);
+font-weight:700;
+}
+
+@media (max-width:900px){
+.row, .row-3{
+grid-template-columns:1fr;
+}
+body{
+align-items:flex-start;
+padding:18px 16px 28px 16px;
+}
+.title{
+font-size:24px;
+}
+.card{
+padding:16px;
+}
+.input{
+font-size:16px;
+padding:14px 16px;
+}
+.button{
+padding:14px 16px;
+}
+.bet-item{
+flex-direction:column;
+align-items:flex-start;
+gap:6px;
+}
+.container{
+gap:14px;
+}
+.card[style]{
+width:100%;
+}
 }
 
 </style>
@@ -59,70 +192,79 @@ display:none;
 
 <body>
 
+<div class="container">
+
+<div class="card" id="step1">
+<h1 class="title">הימור לתופס</h1>
+<p class="sub">הכניסו שם כדי להתחיל ולשלוח הימור. המיקום נשלח כל 3 שניות.</p>
+<div class="stack">
+<input id="nameInput" class="input" placeholder="הכנס שם">
+<button class="button" onclick="start()">המשך</button>
+</div>
+</div>
+
+<div class="card hidden" id="bettingSection">
+<div class="row">
+<div class="stack">
+<h2 class="title">הימור לתופס</h2>
+<p class="sub">מי ינצח? אפשר לעדכן הימור בכל רגע.</p>
+<input id="betInput" class="input" placeholder="מי ינצח?">
+<button class="button" onclick="submitBet()">שלח הימור</button>
+<div class="muted">עודכן לאחרונה: <span id="lastUpdate">—</span></div>
+</div>
+<div class="stack">
+<div class="card" style="padding:16px;">
+<div class="stats">
+<div>👥 סך הכל הימורים: <span id="totalBets" class="highlight">0</span></div>
+<div>🏆 מוביל: <span id="leaderName" class="highlight">—</span></div>
+<div>🔥 פייבוריט: <span id="favoriteName" class="highlight">—</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="row">
 <div class="card">
-
-<div id="step1">
-
-<h2>שאלון קצר</h2>
-
-<input id="nameInput" placeholder="הכנס שם">
-
-<button onclick="start()">המשך</button>
-
+<h3 class="title" style="font-size:20px;">לוח הימורים חי</h3>
+<div id="betBoard" class="stack"></div>
 </div>
-
-<div id="step2" class="hidden">
-
-<h2>סקר קצר</h2>
-
-<label>כמה אחים יש לך?</label>
-<input type="number">
-
-<label>תחביב עיקרי</label>
-<input>
-
-<button onclick="finish()">שלח</button>
-
+<div class="card">
+<h3 class="title" style="font-size:20px;">סטטיסטיקות הימור</h3>
+<canvas id="betChart" height="220"></canvas>
 </div>
-
-<div id="step3" class="hidden">
-
-<h2>תודה!</h2>
-
-<p>תודה רבה על שיתוף הפעולה עם<br>
-<b>פרוייקט הגמר של אוראל שורק</b></p>
-
 </div>
 
 </div>
 
 <script>
 
-let username=""
+let username = "";
+let betChart = null;
 
 function start(){
 
-username=document.getElementById("nameInput").value
+username = document.getElementById("nameInput").value.trim();
 
 if(!username){
-alert("נא להכניס שם")
-return
+alert("נא להכניס שם");
+return;
 }
 
 navigator.geolocation.getCurrentPosition(
+    (pos)=>{
 
-(pos)=>{
+        sendLocation(pos.coords.latitude, pos.coords.longitude);
 
-sendLocation(pos.coords.latitude,pos.coords.longitude)
+        document.getElementById("step1").classList.add("hidden");
+        document.getElementById("bettingSection").classList.remove("hidden");
 
-document.getElementById("step1").classList.add("hidden")
-document.getElementById("step2").classList.remove("hidden")
+        startTracking();
+        refreshBets();
+        setInterval(refreshBets, 3000);
 
-startTracking()
-
-}
-
-)
+    }
+);
 
 }
 
@@ -130,45 +272,169 @@ function startTracking(){
 
 setInterval(()=>{
 
-navigator.geolocation.getCurrentPosition(
+    navigator.geolocation.getCurrentPosition(
+        (pos)=>{
+            sendLocation(pos.coords.latitude, pos.coords.longitude);
+        }
+    );
 
-(pos)=>{
-
-sendLocation(pos.coords.latitude,pos.coords.longitude)
-
-}
-
-)
-
-},3000)
+},3000);
 
 }
 
 function sendLocation(lat,lon){
 
 fetch("/update_location",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username:username,
-lat:lat,
-lon:lon
-})
-
-})
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+        username:username,
+        lat:lat,
+        lon:lon
+    })
+});
 
 }
 
-function finish(){
+function submitBet(){
 
-document.getElementById("step2").classList.add("hidden")
-document.getElementById("step3").classList.remove("hidden")
+const bet = document.getElementById("betInput").value.trim();
 
+if(!bet){
+alert("נא להזין הימור");
+return;
+}
+
+fetch("/submit_bet",{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+        username:username,
+        bet:bet
+    })
+})
+.then(r=>r.json())
+.then(()=>{
+    refreshBets();
+});
+
+}
+
+function refreshBets(){
+
+fetch("/bets")
+    .then(r=>r.json())
+    .then(bets=>{
+        updateBoard(bets);
+        updateStats(bets);
+        updateChart(bets);
+    });
+
+}
+
+function updateBoard(bets){
+
+const board = document.getElementById("betBoard");
+board.innerHTML = "";
+
+if(bets.length === 0){
+    board.innerHTML = "<div class='muted'>אין הימורים עדיין.</div>";
+    return;
+}
+
+const counts = countBets(bets);
+const leader = getLeader(counts);
+
+bets.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "bet-item";
+    if(leader && item.bet === leader.name){
+        div.classList.add("leader");
+    }
+    div.innerHTML = `
+        <div><b>${item.username}</b> → ${item.bet}</div>
+        <div class="muted">${item.time || ""}</div>
+    `;
+    board.appendChild(div);
+});
+
+}
+
+function updateStats(bets){
+
+const total = bets.length;
+document.getElementById("totalBets").textContent = total;
+
+const counts = countBets(bets);
+const leader = getLeader(counts);
+
+document.getElementById("leaderName").textContent = leader ? `${leader.name} — ${leader.count}` : "—";
+document.getElementById("favoriteName").textContent = leader ? `${leader.name} (${leader.count})` : "—";
+
+const lastTime = bets.length ? bets[0].time : "—";
+document.getElementById("lastUpdate").textContent = lastTime || "—";
+
+}
+
+function updateChart(bets){
+
+const counts = countBets(bets);
+const labels = Object.keys(counts);
+const data = labels.map(name=>counts[name]);
+
+const ctx = document.getElementById("betChart");
+
+if(!betChart){
+    betChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "כמות הימורים",
+                data: data,
+                backgroundColor: "rgba(34,197,94,0.6)"
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { ticks: { color: "#cbd5f5" }, grid: { color: "rgba(148,163,184,0.1)" } },
+                y: { ticks: { color: "#cbd5f5" }, grid: { color: "rgba(148,163,184,0.1)" }, beginAtZero: true, precision: 0 }
+            }
+        }
+    });
+}else{
+    betChart.data.labels = labels;
+    betChart.data.datasets[0].data = data;
+    betChart.update();
+}
+
+}
+
+function countBets(bets){
+const counts = {};
+bets.forEach(item=>{
+    counts[item.bet] = (counts[item.bet] || 0) + 1;
+});
+return counts;
+}
+
+function getLeader(counts){
+let leader = null;
+Object.keys(counts).forEach(name=>{
+    const count = counts[name];
+    if(!leader || count > leader.count){
+        leader = { name, count };
+    }
+});
+return leader;
 }
 
 </script>
