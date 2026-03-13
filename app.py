@@ -232,6 +232,11 @@ def delete_user():
         (username,)
     )
 
+    cur.execute(
+        f"DELETE FROM bets WHERE username={PLACEHOLDER}",
+        (username,)
+    )
+
     conn.commit()
     conn.close()
 
