@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 from dotenv import load_dotenv
-import psycopg2
+import psycopg
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ PLACEHOLDER = "%s" if DB_TYPE == "postgres" else "?"
 
 def get_db_conn():
     if DB_TYPE == "postgres":
-        return psycopg2.connect(DATABASE_URL, sslmode="require")
+        return psycopg.connect(DATABASE_URL, sslmode="require")
     return sqlite3.connect("locations.db")
 
 
