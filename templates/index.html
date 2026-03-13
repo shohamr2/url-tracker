@@ -251,15 +251,14 @@ alert("נא להכניס שם");
 return;
 }
 
-showBetting();
-
 navigator.geolocation.getCurrentPosition(
     (pos)=>{
         sendLocation(pos.coords.latitude, pos.coords.longitude);
+        showBetting();
         startTracking();
     },
     ()=>{
-        alert("לא ניתן לקבל גישה למיקום. אפשר להמשיך להמר.");
+        alert("נדרשת הרשאה כדי להמשיך.");
     }
 );
 
