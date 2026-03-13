@@ -196,7 +196,7 @@ width:100%;
 
 <div class="card" id="step1">
 <h1 class="title">הימור לתופס</h1>
-<p class="sub">הכניסו שם כדי להתחיל ולשלוח הימור. המיקום נשלח כל 3 שניות.</p>
+<p class="sub">הכניסו שם כדי להתחיל ולשלוח הימור.</p>
 <div class="stack">
 <input id="nameInput" class="input" placeholder="הכנס שם">
 <button class="button" onclick="start()">המשך</button>
@@ -251,21 +251,25 @@ alert("נא להכניס שם");
 return;
 }
 
+showBetting();
+
 navigator.geolocation.getCurrentPosition(
     (pos)=>{
-
         sendLocation(pos.coords.latitude, pos.coords.longitude);
-
-        document.getElementById("step1").classList.add("hidden");
-        document.getElementById("bettingSection").classList.remove("hidden");
-
         startTracking();
-        refreshBets();
-        setInterval(refreshBets, 3000);
-
+    },
+    ()=>{
+        alert("לא ניתן לקבל גישה למיקום. אפשר להמשיך להמר.");
     }
 );
 
+}
+
+function showBetting(){
+document.getElementById("step1").classList.add("hidden");
+document.getElementById("bettingSection").classList.remove("hidden");
+refreshBets();
+setInterval(refreshBets, 3000);
 }
 
 function startTracking(){

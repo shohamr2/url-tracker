@@ -38,6 +38,14 @@ def init_db():
             time TIMESTAMPTZ
         )
         """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS bets(
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            bet TEXT,
+            updated_at TIMESTAMPTZ
+        )
+        """)
     else:
         cur.execute("""
         CREATE TABLE IF NOT EXISTS locations(
@@ -46,6 +54,14 @@ def init_db():
             lat REAL,
             lon REAL,
             time TEXT
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS bets(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            bet TEXT,
+            updated_at TEXT
         )
         """)
 
@@ -130,6 +146,66 @@ def admin_locations():
             "lat": r[1],
             "lon": r[2],
             "time": r[3]
+        })
+
+    return jsonify(data)
+
+@app.route("/submit_bet", methods=["POST"])
+def submit_bet():
+
+    data = request.get_json(silent=True) or {}
+
+    username = data.get("username")
+    bet = data.get("bet")
+
+    if not username or not bet:
+        return jsonify({"status": "error", "message": "missing fields"}), 400
+
+    updated_at = datetime.datetime.now(datetime.timezone.utc)
+    if DB_TYPE == "sqlite":
+        updated_at = updated_at.isoformat()
+
+    conn = get_db_conn()
+    cur = conn.cursor()
+
+    cur.execute(
+        f"""
+        INSERT INTO bets (username, bet, updated_at)
+        VALUES ({PLACEHOLDER}, {PLACEHOLDER}, {PLACEHOLDER})
+        ON CONFLICT (username)
+        DO UPDATE SET
+            bet=EXCLUDED.bet,
+            updated_at=EXCLUDED.updated_at
+        """,
+        (username, bet, updated_at)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "ok"})
+
+@app.route("/bets")
+def get_bets():
+
+    conn = get_db_conn()
+    cur = conn.cursor()
+
+    cur.execute("SELECT username, bet, updated_at FROM bets ORDER BY updated_at DESC")
+
+    rows = cur.fetchall()
+    conn.close()
+
+    data = []
+
+    for r in rows:
+        bet_time = r[2]
+        if hasattr(bet_time, "isoformat"):
+            bet_time = bet_time.isoformat()
+        data.append({
+            "username": r[0],
+            "bet": r[1],
+            "time": bet_time
         })
 
     return jsonify(data)
