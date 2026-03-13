@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>ניהול משחק</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+
+body{
+margin:0;
+display:flex;
+height:100vh;
+font-family:Arial;
+}
+
+#sidebar{
+width:280px;
+background:#111827;
+color:white;
+padding:15px;
+}
+
+#map{
+flex:1;
+}
+
+.player{
+background:#1f2937;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+cursor:pointer;
+}
+
+.player:hover{
+background:#374151;
+}
+
+input{
+width:100%;
+padding:8px;
+margin-bottom:10px;
+border-radius:6px;
+border:none;
+}
+
+button{
+width:100%;
+padding:8px;
+margin-bottom:10px;
+border:none;
+border-radius:6px;
+background:#2563eb;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="sidebar">
+
+<h2>שחקנים</h2>
+
+<input id="search" placeholder="חפש שחקן">
+
+<button onclick="centerAll()">מרכז את כולם</button>
+
+<div id="players"></div>
+
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+const ADMIN_PASSWORD="1234"
+
+let map=L.map('map').setView([31.78,35.21],14)
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+).addTo(map)
+
+let markers={}
+
+function getColor(username){
+
+const colors=["#ef4444","#3b82f6","#22c55e","#f59e0b","#a855f7","#ec4899"]
+
+let hash=0
+
+for(let i=0;i<username.length;i++){
+hash+=username.charCodeAt(i)
+}
+
+return colors[hash%colors.length]
+
+}
+
+function refresh(){
+
+fetch(`/admin_locations?password=${ADMIN_PASSWORD}`)
+
+.then(r=>r.json())
+
+.then(players=>{
+
+let list=document.getElementById("players")
+list.innerHTML=""
+
+players.forEach(player=>{
+
+let color=getColor(player.username)
+
+if(!markers[player.username]){
+
+let marker=L.circleMarker(
+[player.lat,player.lon],
+{
+radius:18,
+color:color,
+fillColor:color,
+fillOpacity:0.9
+}).addTo(map)
+
+marker.bindTooltip(player.username,{permanent:true})
+
+markers[player.username]=marker
+
+}else{
+
+markers[player.username].setLatLng([player.lat,player.lon])
+
+}
+
+let div=document.createElement("div")
+div.className="player"
+div.innerHTML=`
+<b>${player.username}</b><br>
+${player.time}<br>
+<button onclick="deleteUser('${player.username}')">מחק</button>
+`
+
+div.onclick=()=>{
+
+map.setView([player.lat,player.lon],18)
+
+}
+
+list.appendChild(div)
+
+})
+
+})
+
+}
+
+function centerAll(){
+
+let group=[]
+
+Object.values(markers).forEach(m=>{
+group.push(m.getLatLng())
+})
+
+if(group.length>0){
+
+let bounds=L.latLngBounds(group)
+
+map.fitBounds(bounds)
+
+}
+
+}
+
+document.getElementById("search").addEventListener("input",(e)=>{
+
+let name=e.target.value.toLowerCase()
+
+Object.keys(markers).forEach(user=>{
+
+if(user.toLowerCase().includes(name)){
+
+map.setView(markers[user].getLatLng(),18)
+
+}
+
+})
+
+})
+
+refresh()
+
+setInterval(refresh,2000)
+
+function deleteUser(username){
+
+let password = prompt("הכנס סיסמה למחיקה")
+
+if(!password) return
+
+fetch("/delete_user",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+username:username,
+password:password
+})
+
+})
+.then(r=>r.json())
+.then(res=>{
+
+if(res.status=="ok"){
+
+alert("המשתמש נמחק")
+
+refresh()
+
+}else{
+
+alert("סיסמה שגויה")
+
+}
+
+})
+
+}
+
+</script>
+
+</body>
+
+</html>

