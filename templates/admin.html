@@ -61,6 +61,22 @@ background:#2563eb;
 color:white;
 }
 
+.bet-panel{
+margin-top:16px;
+}
+
+.bet-item{
+background:#1f2937;
+padding:8px;
+border-radius:8px;
+margin-bottom:8px;
+}
+
+.bet-time{
+color:#94a3b8;
+font-size:12px;
+}
+
 </style>
 
 </head>
@@ -76,6 +92,11 @@ color:white;
 <button onclick="centerAll()">מרכז את כולם</button>
 
 <div id="players"></div>
+
+<div class="bet-panel">
+<h3>הימורים מובילים</h3>
+<div id="betLeaderboard"></div>
+</div>
 
 </div>
 
@@ -204,6 +225,43 @@ map.setView(markers[user].getLatLng(),18)
 refresh()
 
 setInterval(refresh,2000)
+
+function refreshBetsStats(){
+
+fetch("/bets")
+.then(r=>r.json())
+.then(bets=>{
+let counts={}
+let latestTimes={}
+bets.forEach(item=>{
+counts[item.bet]=(counts[item.bet]||0)+1
+if(!latestTimes[item.bet]){
+latestTimes[item.bet]=item.time
+}
+})
+
+let list=document.getElementById("betLeaderboard")
+list.innerHTML=""
+
+let entries=Object.entries(counts).sort((a,b)=>b[1]-a[1])
+
+if(entries.length==0){
+list.innerHTML="<div class='bet-item'>אין הימורים</div>"
+return
+}
+
+entries.forEach(([name,count])=>{
+let div=document.createElement("div")
+div.className="bet-item"
+div.innerHTML=`<b>${name}</b> — ${count}<div class="bet-time">${latestTimes[name] || ""}</div>`
+list.appendChild(div)
+})
+})
+
+}
+
+refreshBetsStats()
+setInterval(refreshBetsStats,3000)
 
 function deleteUser(username){
 
