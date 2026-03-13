@@ -39,6 +39,13 @@ def init_db():
         )
         """)
         cur.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_users(
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+            deleted_at TIMESTAMPTZ
+        )
+        """)
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS bets(
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
@@ -54,6 +61,13 @@ def init_db():
             lat REAL,
             lon REAL,
             time TEXT
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_users(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            deleted_at TEXT
         )
         """)
         cur.execute("""
@@ -101,6 +115,14 @@ def update_location():
 
     conn = get_db_conn()
     cur = conn.cursor()
+
+    cur.execute(
+        f"SELECT 1 FROM deleted_users WHERE username={PLACEHOLDER} LIMIT 1",
+        (username,)
+    )
+    if cur.fetchone():
+        conn.close()
+        return jsonify({"status": "ok"})
 
     cur.execute(
         f"INSERT INTO locations (username,lat,lon,time) VALUES ({PLACEHOLDER},{PLACEHOLDER},{PLACEHOLDER},{PLACEHOLDER})",
@@ -235,6 +257,21 @@ def delete_user():
     cur.execute(
         f"DELETE FROM bets WHERE username={PLACEHOLDER}",
         (username,)
+    )
+
+    deleted_at = datetime.datetime.now(datetime.timezone.utc)
+    if DB_TYPE == "sqlite":
+        deleted_at = deleted_at.isoformat()
+
+    cur.execute(
+        f"""
+        INSERT INTO deleted_users (username, deleted_at)
+        VALUES ({PLACEHOLDER}, {PLACEHOLDER})
+        ON CONFLICT (username)
+        DO UPDATE SET
+            deleted_at=EXCLUDED.deleted_at
+        """,
+        (username, deleted_at)
     )
 
     conn.commit()
