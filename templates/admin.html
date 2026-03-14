@@ -13,68 +13,139 @@ href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 
+:root{
+--bg: #0f172a;
+--panel: #0b1220;
+--panel-2: #111a2b;
+--card: #101b2e;
+--accent: #f59e0b;
+--accent-2: #22c55e;
+--text: #e5e7eb;
+--muted: #9aa4b2;
+--danger: #ef4444;
+}
+
 body{
 margin:0;
 display:flex;
 height:100vh;
-font-family:Arial;
+font-family:"Rubik", "Assistant", "Noto Sans Hebrew", sans-serif;
+background:
+radial-gradient(1200px 600px at 10% -10%, #1f2937, transparent 60%),
+radial-gradient(900px 500px at 90% 0%, #0b1220, transparent 55%),
+var(--bg);
+color:var(--text);
 }
 
 #sidebar{
-width:280px;
-background:#111827;
-color:white;
-padding:15px;
+width:320px;
+background:linear-gradient(180deg, var(--panel), var(--panel-2));
+padding:18px 16px;
+display:flex;
+flex-direction:column;
+gap:12px;
+border-right:1px solid rgba(255,255,255,0.08);
 }
 
 #map{
 flex:1;
 }
 
+.title{
+margin:0;
+font-size:20px;
+letter-spacing:0.5px;
+}
+
+.subtitle{
+margin:0;
+color:var(--muted);
+font-size:12px;
+}
+
+.actions{
+display:flex;
+gap:8px;
+}
+
+.players-wrap{
+flex:1;
+overflow:auto;
+padding-right:4px;
+}
+
 .player{
-background:#1f2937;
+background:var(--card);
 padding:10px;
-border-radius:10px;
+border-radius:12px;
 margin-bottom:10px;
 cursor:pointer;
+box-shadow:0 6px 16px rgba(0,0,0,0.25);
+border:1px solid rgba(255,255,255,0.06);
 }
 
 .player:hover{
-background:#374151;
+border-color:rgba(255,255,255,0.18);
+}
+
+.player-name{
+font-weight:600;
 }
 
 input{
 width:100%;
-padding:8px;
-margin-bottom:10px;
-border-radius:6px;
-border:none;
+padding:10px 12px;
+border-radius:10px;
+border:1px solid rgba(255,255,255,0.1);
+background:#0c1425;
+color:var(--text);
 }
 
 button{
 width:100%;
-padding:8px;
-margin-bottom:10px;
+padding:9px 12px;
 border:none;
-border-radius:6px;
-background:#2563eb;
+border-radius:10px;
+background:var(--accent);
+color:#111827;
+font-weight:700;
+cursor:pointer;
+}
+
+.delete-btn{
+background:var(--danger);
 color:white;
+margin-top:8px;
 }
 
 .bet-panel{
-margin-top:16px;
+margin-top:6px;
 }
 
 .bet-item{
-background:#1f2937;
+background:var(--card);
 padding:8px;
-border-radius:8px;
+border-radius:10px;
 margin-bottom:8px;
+border:1px solid rgba(255,255,255,0.06);
 }
 
 .bet-time{
-color:#94a3b8;
+color:var(--muted);
 font-size:12px;
+}
+
+@media (max-width: 900px){
+body{
+flex-direction:column;
+}
+#sidebar{
+width:100%;
+height:55vh;
+}
+#map{
+height:45vh;
+}
 }
 
 </style>
@@ -85,16 +156,23 @@ font-size:12px;
 
 <div id="sidebar">
 
-<h2>שחקנים</h2>
+<div>
+<h2 class="title">שחקנים</h2>
+<p class="subtitle">עדכון בזמן אמת</p>
+</div>
 
 <input id="search" placeholder="חפש שחקן">
 
+<div class="actions">
 <button onclick="centerAll()">מרכז את כולם</button>
+</div>
 
+<div class="players-wrap">
 <div id="players"></div>
+</div>
 
 <div class="bet-panel">
-<h3>הימורים מובילים</h3>
+<h3 class="title">הימורים מובילים</h3>
 <div id="betLeaderboard"></div>
 </div>
 
@@ -174,9 +252,9 @@ markers[player.username].setLatLng([player.lat,player.lon])
 let div=document.createElement("div")
 div.className="player"
 div.innerHTML=`
-<b>${player.username}</b><br>
-${player.time}<br>
-<button onclick="deleteUser('${player.username}')">מחק</button>
+<div class="player-name">${player.username}</div>
+<div class="bet-time">${player.time}</div>
+<button class="delete-btn" onclick="deleteUser('${player.username}')">מחק</button>
 `
 
 div.onclick=()=>{
